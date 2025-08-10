@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>รายงานสอบสวนโรคเบื้องต้น</title>
+  <style>
+    body { font-family: Arial, sans-serif; margin: 20px; }
+    label { display: block; margin-top: 15px; font-weight: bold; }
+    textarea, input[type=text], input[type=date] { width: 100%; padding: 8px; margin-top: 5px; }
+    #report { margin-top: 30px; border: 1px solid #ccc; padding: 20px; white-space: pre-wrap; background: #f9f9f9; }
+    button { margin-top: 20px; padding: 10px 20px; font-size: 16px; }
+  </style>
+</head>
+<body>
+
+<h2>ฟอร์มกรอกข้อมูลรายงานสอบสวนโรคเบื้องต้น</h2>
+
+<form id="investigationForm">
+  <label for="title">1. ชื่อเรื่อง</label>
+  <input type="text" id="title" required>
+
+  <label for="background">2. ความเป็นมา และวัตถุประสงค์การสอบสวน และวันที่ลงสอบสวน</label>
+  <textarea id="background" rows="4" required></textarea>
+  <input type="date" id="investigationDate" required>
+
+  <label for="result">3. ผลการสอบสวนโรค</label>
+  <textarea id="result" rows="4" required></textarea>
+
+  <label for="actions">4. กิจกรรมหรือมาตรการที่ดำเนินการแล้ว</label>
+  <textarea id="actions" rows="4" required></textarea>
+
+  <label for="trend">5. แนวโน้มการระบาด</label>
+  <textarea id="trend" rows="3" required></textarea>
+
+  <label for="importance">6. ความสำคัญและความเร่งด่วน</label>
+  <textarea id="importance" rows="3" required></textarea>
+
+  <label for="recommendation">7. ข้อเสนอเพื่อพิจารณา</label>
+  <textarea id="recommendation" rows="3" required></textarea>
+
+  <button type="submit">สร้างรายงาน</button>
+</form>
+
+<button id="exportDoc" style="display:none;">ส่งออกเป็น Word</button>
+
+<h3>รายงานสอบสวนโรคเบื้องต้น</h3>
+<div id="report"></div>
+
+<!-- โหลดไลบรารี docx จาก CDN -->
+<script src="https://cdn.jsdelivr.net/npm/docx@7.1.1/build/index.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/file-saver/2.0.5/FileSaver.min.js"></script>
+
+<script>
+  const { Document, Packer, Paragraph, TextRun } = window.docx;
+
+  let reportData = null;
+
+  document.getElementById('investigationForm').addEventListener('submit', function(event) {
+    event.preventDefault();
+
+    const title = document.getElementById('title').value;
+    const background = document.getElementById('background').value;
+    const investigationDate = document.getElementById('investigationDate').value;
+    const result = document.getElementById('result').value;
+    const actions = document.getElementById('actions').value;
+    const trend = document.getElementById('trend').value;
+    const importance = document.getElementById('importance').value;
+    const recommendation = document.getElementById('recommendation').value;
+
+    reportData = {
+      title,
+      background,
+      investigationDate,
+      result,
+      actions,
+      trend,
+      importance,
+      recommendation
+    };
+
+    const reportText = `
+ชื่อเรื่อง: ${title}
+
+ความเป็นมา และวัตถุประสงค์การสอบสวน: 
+${background}
+วันที่ลงสอบสวน: ${investigationDate}
+
+ผลการสอบสวนโรค:
+${result}
+
+กิจกรรมหรือมาตรการที่ดำเนินการแล้ว:
+${actions}
+
+แนวโน้มการระบาด:
+${trend}
+
+ความสำคัญและความเร่งด่วน:
+${importance}
+
+ข้อเสนอเพื่อพิจารณา:
+${recommendation}
+`;
+    document.getElementById('report').textContent = reportText;
+    document.getElementById('exportDoc').style.display = "inline-block";
+  });
+
+  document.getElementById('exportDoc').addEventListener('click', function() {
+    if (!reportData) return alert('กรุณาสร้างรายงานก่อน');
+
+    const doc = new Document({
+      sections: [{
+        properties: {},
+        children: [
+          new Paragraph({
+            children: [new TextRun({ text: "รายงานสอบสวนโรคเบื้องต้น", bold: true, size: 28 })],
+            spacing: { after: 300 }
+          }),
+          new Paragraph({ text: `ชื่อเรื่อง: ${reportData.title}`, spacing: { after: 200 } }),
+          new Paragraph({ text: `ความเป็นมา และวัตถุประสงค์การสอบสวน:` }),
+          new Paragraph({ text: reportData.background, spacing: { after: 200 } }),
+          new Paragraph({ text: `วันที่ลงสอบสวน: ${reportData.investigationDate}`, spacing: { after: 300 } }),
+          new Paragraph({ text: `ผลการสอบสวนโรค:` }),
+          new Paragraph({ text: reportData.result, spacing: { after: 300 } }),
+          new Paragraph({ text: `กิจกรรมหรือมาตรการที่ดำเนินการแล้ว:` }),
+          new Paragraph({ text: reportData.actions, spacing: { after: 300 } }),
+          new Paragraph({ text: `แนวโน้มการระบาด:` }),
+          new Paragraph({ text: reportData.trend, spacing: { after: 300 } }),
+          new Paragraph({ text: `ความสำคัญและความเร่งด่วน:` }),
+          new Paragraph({ text: reportData.importance, spacing: { after: 300 } }),
+          new Paragraph({ text: `ข้อเสนอเพื่อพิจารณา:` }),
+          new Paragraph({ text: reportData.recommendation })
+        ]
+      }]
+    });
+
+    Packer.toBlob(doc).then(blob => {
+      window.saveAs(blob, "รายงานสอบสวนโรคเบื้องต้น.docx");
+    });
+  });
+</script>
+
+</body>
+</html>
